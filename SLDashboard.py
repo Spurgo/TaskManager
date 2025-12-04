@@ -17,43 +17,16 @@ st.set_page_config(
 
 st.title("To-Do List")
 
-today_todo, past_todo, future_todo, add_todo = st.tabs(["Today's TODO", "Past's TODO", "Future's TODO", "ADD TODO"])
+today_todo, search_todo, future_todo = st.tabs(["Today's TODO", "Search TODOs", "Future's TODO"])
 
 with today_todo:
     st.header("Today's TODO")
-    task_today = task_manager.get_tasksby_date(date.today())
-    
-    st.markdown("---")
 
-    for task in task_today:
-        field = task.get('Field', 'N/A')
-        todo = task.get('What_TODO', 'Nessuna Descrizione')
-        hours = task.get('Hours', 0)
-        data_creazione = task.get('Creation_Date', 'Data sconosciuta')
+    field = st.text_input("Field:", key="today_field")
+    hours = st.text_input("Hours you want to dedicate:", key= "today_hours")
+    what_todo = st.text_input("Task:", key="today_task")
 
-        st.subheader(f"{field} - {todo}")
-
-        st.write(f"Ore da dedicare: {hours}")
-
-        if isinstance(data_creazione, datetime):
-            st.caption(f"inserita il: {data_creazione.strftime('%d/%m/%Y')}")
-        else:
-            st.caption(f"Inserita il: {data_creazione}")
-
-with past_todo:
-    st.header("Past's TODO")
-
-with future_todo:
-    st.header("Future's TODO")
-
-with add_todo:
-    st.header("Add New TODO")
-
-    field = st.text_input("Field:")
-    hours = st.text_input("Hours you want to dedicate:")
-    what_todo = st.text_input("Task:")
-
-    if st.button("Save Task"):
+    if st.button("Save Task", key="today_save_button"):
         if not field or not hours or not what_todo:
             st.error("Compila tutti i campi")
             st.stop() #?
@@ -75,3 +48,85 @@ with add_todo:
             st.success("Task aggiunta con successo")
         else:
             st.error("Errore durante l'inserimento nel database")
+
+    task_today = task_manager.get_tasksby_date(date.today())
+    
+    st.markdown("---")
+
+    for task in task_today:
+        field = task.get('Field', 'N/A')
+        todo = task.get('What_TODO', 'Nessuna Descrizione')
+        hours = task.get('Hours', 0)
+        data_creazione = task.get('Creation_Date', 'Data sconosciuta')
+
+        title = f"**[{field}]**"
+        
+        with st.expander(title):
+            st.markdown(f"**Argument:** `{todo}`")
+            st.markdown(f"**Dedicated Hours:** `{hours}` hours")
+            
+            if isinstance(data_creazione, datetime):
+                st.caption(f"Added: {data_creazione.strftime('%d/%m/%Y')}")
+            else:
+                st.caption(f"Added: {data_creazione}")
+
+
+with search_todo:
+    st.header("Search TODOs")
+    date_to_search = st.date_input("Search for date:")
+
+    if st.button("Search", key="search_past"):
+        if not date_to_search:
+            st.error("insert a date for search")
+            st.stop
+
+        task_today = task_manager.get_tasksby_date(date_to_search)
+        st.markdown("---")
+        
+        for task in task_today:
+            field = task.get('Field', 'N/A')
+            todo = task.get('What_TODO', 'Nessuna Descrizione')
+            hours = task.get('Hours', 0)
+            data_creazione = task.get('Creation_Date', 'Data sconosciuta')
+
+            title = f"**[{field}]**"
+            
+            with st.expander(title):
+                st.markdown(f"**Argument:** `{todo}`")
+                st.markdown(f"**Dedicated Hours:** `{hours}` hours")
+                
+                if isinstance(data_creazione, datetime):
+                    st.caption(f"Added: {data_creazione.strftime('%d/%m/%Y')}")
+                else:
+                    st.caption(f"Added: {data_creazione}")
+
+with future_todo:
+    st.header("Future's TODO")
+
+    field = st.text_input("Field:", key="future_field")
+    hours = st.text_input("Hours you want to dedicate:", key="future_hours")
+    what_todo = st.text_input("Task:", key="future_task")
+    when_todo = st.date_input("Due date:", key="future_date")
+
+    if st.button("Save Task"):
+        if not field or not hours or not what_todo or not when_todo:
+            st.error("Compila tutti i campi")
+            st.stop() #?
+
+        try:
+            hours_val = float(hours)
+        except ValueError:
+            st.error("Il campo Hours dev'essere un numero")
+            st.stop()
+        
+
+        task_dict = {'Field': field, 'Hours': hours_val, 'What_TODO': what_todo, 'Creation_Date': datetime.combine(when_todo, time.min)}
+
+        result = task_manager.add_task(task_dict)
+
+        if result:
+            st.success("Task aggiunta con successo")
+        else:
+            st.error("Errore durante l'inserimento nel database")
+
+
