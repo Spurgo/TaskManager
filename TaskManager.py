@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from datetime import time, datetime, date, timedelta
+from bson import ObjectId
 
 class TaskManager:
     def __init__(self):
@@ -46,3 +47,37 @@ class TaskManager:
         except Exception as e:
             print(f"Errore durante la query: {e}")
             return []
+        
+    def update_task_status(self, task_id, new_status):
+        try:
+            if isinstance(task_id, str):
+                obj_id = ObjectId(task_id)
+            else:
+                obj_id = task_id
+        except Exception:
+            print(f"Errore: ID non valido: {task_id}")
+
+        query = {
+            "_id": obj_id
+        }
+
+        update = {
+            "$set":{
+                "Completed": new_status
+            }
+        }
+
+        try:
+            result = self.task_collection.update_one(query, update)
+            if result.modified_count == 1:
+                print(f"Task set to DONE")
+                return True
+            else:
+                print(f"Errore durante aggiornamento status")
+                return False
+        except Exception as e:
+            print(f"Errore durante l'aggiornamento del database: {e}")
+            return False
+
+        
+            
